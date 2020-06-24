@@ -8,6 +8,8 @@
 
 我的脚本油猴 https://greasyfork.org/zh-CN/scripts/399176-%E9%A5%B0%E5%93%81%E7%AD%9B%E9%80%89%E5%80%92%E4%BD%99%E9%A2%9D-%E6%AF%94%E4%BE%8B%E8%87%AA%E5%AE%9A%E4%B9%89-%E6%94%AF%E6%8C%81buff-c5game-igxe
 
+我的帖子 详细说明 https://keylol.com/t577669-1-1
+
 支持键盘指令
 
 /*A 上一页
