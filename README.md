@@ -13,6 +13,8 @@ __我的帖子/说明/反馈__
 
  `Bootstrap4` 相关 `CSS` 引用 **微调**兼容各网站页面样式
 
+接收键盘指令`Keyboard` 自动筛选
+
 兼容 `Edge` `Chrome` `Firefox(略丑)`
   * [igxe](https://www.igxe.cn/dota2/570?sort=3)有显示BUg
   * c5game由于页面地址混乱只适配[dota](https://www.c5game.com/dota.html)/[csgo](https://www.c5game.com/csgo/default/result.html?sort=update_time)
