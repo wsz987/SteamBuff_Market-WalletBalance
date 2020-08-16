@@ -1,9 +1,19 @@
 # steam Buff饰品筛选倒余额
 比例自定义 已适配[Buff](https://buff.163.com/) [igxe](https://www.igxe.cn/dota2/570?sort=3) c5game--[dota](https://www.c5game.com/dota.html)/[csgo](https://www.c5game.com/csgo/default/result.html?sort=update_time)
 
-__我的帖子/反馈__
+__我的帖子/说明/反馈__
 
 [饰品筛选倒余额 (Keylol论坛)](https://keylol.com/t577669-1-1)
+
+面板模块采用 `Vue` 实现数据交互 
+
+筛选机制由 `JQury` 实现 `DOM` 操作 及动态组件加载
+
+结合JS `ES6` 新特性来方便操作 `let` , `const` , `includes` , `new Promise()` , `Array.from().filter(()=>{})` , `async-await`/`then()`避免回调 **等**
+
+手动 **Copy** `Bootstrap4` 相关 `CSS` **微调**兼容各网站页面样式
+
+兼容 `Edge` `Chrome` `Firefox(略丑)`
   * [igxe](https://www.igxe.cn/dota2/570?sort=3)有显示BUg
   * c5game由于页面地址混乱只适配[dota](https://www.c5game.com/dota.html)/[csgo](https://www.c5game.com/csgo/default/result.html?sort=update_time)
 
