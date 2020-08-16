@@ -2,7 +2,7 @@
 // @name         饰品筛选倒余额 比例自定义 支持buff c5game igxe
 // @namespace    http://tampermonkey.net/
 // @icon      	 https://store.steampowered.com/favicon.ico
-// @version      0.15
+// @version      0.22
 // @description  饰品筛选倒余额 可视化比例自定义面板 支持buff c5game igxe
 // @author       wsz987
 // @match        *://buff.163.com/market/?game=*
@@ -11,13 +11,14 @@
 // @match        *://www.igxe.cn/*
 // @match        *://www.igxe.cn/product/*
 // @require      https://cdn.staticfile.org/jquery/1.12.4/jquery.min.js
+// @require      https://cdn.staticfile.org/vue/2.4.2/vue.min.js
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_openInTab
+// @grant        GM_addStyle
 // @supportURL   https://keylol.com/t577669-1-1
 // ==/UserScript==
 
-const $ = window.jQuery;
 /*A 上一页
 S 居中且过滤
 D 下一页
@@ -26,199 +27,303 @@ E 过滤后全部打开*/
 
 (function() {
     'use strict';
-    window.onload=function(){
-        web();
-        middle();
-        tool()
-        try{
-            document.onkeydown=function(event){
-                var e = event || window.event || arguments.callee.caller.arguments[0];
-                if(e && e.keyCode==83){
-                    middle().then(filter())
-                }
-                if(e && e.keyCode==68){
-                    nextpage();
-                }
-                if(e && e.keyCode==65){
-                    prevpage();
-                }
-                if(e && e.keyCode==87){
-                    middle();
-                }
-                if(e && e.keyCode==69){
-                    filter().then(allopen());
-                }
-            }
-        }catch(e){console.log(e)}
-    }
-    if(window.location.href.indexOf('buff.163.com/market/goods?goods_id=')>-1||window.location.href.indexOf('www.igxe.cn/product')>-1||window.location.href.indexOf('c5game.com/dota/')>-1||window.location.href.indexOf('c5game.com/csgo/')>-1){
-        setTimeout(function(){
-            for(var i=0;i<6;i++){
-                setTimeout(choice,500*i);
-            }
-        },3000);
-    }
-})();
-
-function tool(){
-    var li = "<div id='addBtn' style='cursor:pointer;z-index:998;position:fixed;left:10px;top:200px;font-size:100%'>A 上一页<br/>S&nbsp;&nbsp;过滤<br/>D 下一页<br/>W 居中<br/>E 过滤后全部打开</div>";
-    var tool ="<div class='price_tool_div' style='cursor:pointer;z-index:998;position:fixed;left:10px;top:400px;font-size:100%'><form onsubmit='return false' id='price_tool_form'><div class='price_tool_input_div'><label class='tool_input_btn'><b>在售数量&nbsp;</b></label><input type='number' step='10' min='0' max='9999' class='price_tool_input filter_search' id='sale_count' placeholder='最低'/></div><div class='price_tool_input_div'><label class='tool_input_btn'><b>理想比例&nbsp;</b></label><input type='number' step='0.01' min='0.6' max='1'  class='price_tool_input filter_search'  id='ideal' placeholder=' 0.6~1'/></div><div class='price_tool_input_div'><label class='tool_input_btn'><b>最高比例&nbsp;</b></label><input type='number' step='0.01' min='0.6' max='1'  class='price_tool_input filter_search'  id='unideal' placeholder=' 0.61~1'/></div></form><div style='margin-top: 0.3rem;text-align: center;'><span class='pre_pagebtn' style='padding: 0 10px;margin-right: 20px;'>&lt;</span><span class='price_tool_reset' ><b>重置</b></span><span class='next_pagebtn' style='padding: 0 10px;margin-left: 20px;'>&gt;</span></div></div>"
-    $("body").append(li,tool);
-    $('.pre_pagebtn')[0].onclick=function(){
-        prevpage();
-    }
-    $('.next_pagebtn')[0].onclick=function(){
-        nextpage();
-    }
-    var saved_default=['300','0.7','0.75'],
-        saved_update = GM_getValue("saved_tool");
-    $('.price_tool_reset')[0].onclick=function(){  //reset
-        GM_setValue("saved_tool",saved_default);
-        initdata()
-        alert('重置成功 默认数据["300","0.7","0.75"]')
-    }
-    if (saved_update == null) {
-        GM_setValue("saved_tool",saved_default);
-    }
-    console.log(GM_getValue('saved_tool'))
-    initdata()
-    $("#sale_count")[0].onchange= function(){
-        saved_update[0]=parseInt($("#sale_count")[0].value)
-        if(saved_update[0]>0&&window.location.href.indexOf('buff.163.com/market/?game=')>-1){window.location.reload()}
-        if(saved_update[0]>0&&window.location.href.indexOf('www.igxe.cn')>-1&&window.location.href.indexOf('product')==-1){window.location.reload()}
-        if(saved_update[0]>0&&window.location.href.indexOf('www.c5game.com')>-1){window.location.reload()}
-        GM_setValue("saved_tool",saved_update);
-    };
-    $("#ideal")[0].onchange= function(){
-        if($("#ideal")[0].value==''||$("#ideal")[0].value<0.6||$("#ideal")[0].value>=1){alert('理想比例值为0.6~<1')}
-        else{
-            saved_update[1]=$("#ideal")[0].value
-            GM_setValue("saved_tool",saved_update);
-        }
-    };
-    $("#unideal")[0].onchange= function(){
-        if($("#unideal")[0].value==''||$("#unideal")[0].value<0.6||$("#unideal")[0].value>=1){alert('最高比例值为0.6~<1')}
-        else{
-            saved_update[2]= $("#unideal")[0].value
-            GM_setValue("saved_tool",saved_update);
-        }
-    };
-}
-
-function choice(){
+    const tool_default = ['300','0.7','0.75','3','2']//自定义默认配置
+    web();
+    middle()
     try{
-        var lsr=eval($(".lsr")[0].innerText),
-            hbr=eval($(".hbr")[0].innerText),
-            Value_1=eval(GM_getValue('saved_tool')[1]),
-            Value_2=eval(GM_getValue('saved_tool')[2]);  //lsr出售价比例  hbr收购价比例
-        console.log(GM_getValue('saved_tool')[1],GM_getValue('saved_tool')[2]);
-        if(lsr>eval(1)||hbr>eval(1)){window.close()}
-        if(lsr>Value_1){
-            if(hbr>Value_2){
-                window.close();
+        document.onkeydown=function(event){
+            var e = event || window.event || arguments.callee.caller.arguments[0];
+            if(e && e.keyCode==83){
+                middle().then(v.filter())
             }
-        }else{
-            if(hbr>Value_2){
-                window.close();
+            if(e && e.keyCode==68){
+                v.nextpage();
+            }
+            if(e && e.keyCode==65){
+                v.prevpage();
+            }
+            if(e && e.keyCode==87){
+                middle();
+            }
+            if(e && e.keyCode==69){
+                v.filter().then(v.allopen());
             }
         }
     }catch(e){console.log(e)}
-}
+    $("body").append(`
+<div class="card" id='tools' style='z-index:998;position:fixed;left:10px;top:400px;'>
+        <div class="card-header">
+			<a href="#" class="badge badge-secondary" title="支持按键指令哦&#10;A 上一页&#10;D 下一页&#10;W 居中&#10;S 过滤&#10;E 过滤后全部打开">鼠标移动到我这</a>
+			<a href="https://keylol.com/t577669-1-1" class="badge badge-secondary" target='_blank' title="点击了解脚本&#10;问题反馈&#10;我不介意打赏哈&#10;作者: wsz987">auth</a>
+		</div>
+		<div class="card-body" style='display:flex;flex-direction:column;'>
+            <label title="便于快速出手&#10;避免误差">在售数量&nbsp;<input type='number' v-model.lazy='count' min='0' step='10' max='9999' placeholder='最低'/></label>
+            <label title="实质上是避免&#10;出售-收购 比例差距过大&#10;避免JS抬价而造成损失">理想比例&nbsp;<input type='number' v-model.lazy='idea' step='0.01' min='0.6' max='1' placeholder=' 0.6~1'/></label>
+            <label title="最终筛选不超过比例">最高比例&nbsp;<input type='number' v-model.lazy='unidea' step='0.01' min='0.6' max='1' placeholder=' 0.61~1'/></label>
+            <span title="网速慢者福音&#10;最小值1s&#10;最大值10s&#10;默认延迟3s&#10;作用于饰品页面&#10;避免数据加载不及时&#10;导致筛选失败&#10;建议一次不要打开太多页面">延迟&nbsp;{{timeout}}s&nbsp;后筛选</span><input type="range" v-model="timeout" min="1" max="10" step="0.5"></label>
+            <span title="用于一不小心打开太多页面的再校验&#10;注意:这个选项会消耗浏览器性能&#10;最小0次&#10;最大10次&#10;默认2次&#10;每次延迟0.5s">&nbsp;{{fortimeout}}次&nbsp;校验</span><input type="range" v-model="fortimeout" min="0" max="10" step="1"></label>
+        </div>
+        <div class="card-footer btn-group" style='justify-content:center;padding: 0.5rem;'>
+            <button class="btn" @click='prevpage'>&lt;</button>
+            <button class="btn" @click='tools_reset'>重置</button>
+            <button class="btn" @click='nextpage'>&gt;</button>
+        </div>
+    </div>
+`);
+    if(GM_getValue("saved")==null)
+        GM_setValue("saved", tool_default)
+    console.log(`配置[${GM_getValue('saved')}]`)
+    var saved_update = GM_getValue("saved")
+    var v=new Vue({
+        el: '#tools',
+        data:{
+            count:GM_getValue("saved")[0],
+            idea:GM_getValue("saved")[1],
+            unidea:GM_getValue("saved")[2],
+            timeout:GM_getValue("saved")[3],
+            fortimeout:GM_getValue("saved")[4]
+        },
+        mounted() {
+            if(location.href.includes('buff.163.com/market/goods?goods_id=')||location.href.includes('www.igxe.cn/product')||location.href.includes('c5game.com/dota/')||location.href.includes('c5game.com/csgo/item')){
+                console.log(`${this.timeout}s后开始筛选 ${this.fortimeout}次校验`)
+                setTimeout(()=>{
+                    if(this.choice()){
+                        for (var i = 0; i < this.fortimeout; i++) {
+                            (i=> {
+                                setTimeout(()=>{
+                                    console.log(`第 ${i+1}次校验`)
+                                    this.choice()
+                                }, 500 * i);
+                            })(i);
+                        }
+                    }
+                },this.timeout*1000);
+            }
+        },
+        methods:{
+            prevpage(){
+                try{
+                    $(".page-link.prev")[0].click();
+                }catch(e){
+                    try{
+                        console.log(e)
+                        $(".previous")[0].childNodes[0].click();
+                    }catch(e){console.log(e)
+                              $(".prev.js-page")[0].click();}
+                }
+            },
+            nextpage(){
+                try{
+                    $(".page-link.next")[0].click()
+                    try{
+                        setTimeout(this.filter,2000);
+                    }catch(e){console.log(e)}
+                }catch(e){
+                    try{
+                        console.log(e)
+                        $(".next")[0].childNodes[0].click();
+                    }catch(e){
+                        console.log(e)
+                        $(".next.js-page")[0].click();
+                    }
+                }
+            },
+            tools_reset(){
+                console.log('数据重置')
+                GM_setValue("saved", null)
+                window.location.reload()
+            },
+            choice(){
+                try{
+                    var lsr=eval($(".lsr")[0].innerText),
+                        hbr=eval($(".hbr")[0].innerText),
+                        Value_1=eval(this.idea),
+                        Value_2=eval(this.unidea);  //lsr出售价比例  hbr收购价比例
+                    console.log(GM_getValue('saved')[1],GM_getValue('saved')[2]);
+                    if(lsr>eval(1)||hbr>eval(1)){window.close()}
+                    if(lsr>Value_1){
+                        if(hbr>Value_2){
+                            window.close();
+                        }
+                    }else{
+                        if(hbr>Value_2){
+                            window.close();
+                        }
+                    }
+                }catch(e){
+                    console.log(e)
+                    return true
+                }
+            },
+            filter(){
+                return new Promise(resolve => {
+                    let n=0
+                    Array.from($(website[1])).filter(x=>{
+                        if(eval(x.innerHTML.replace(/[^0-9]/g, ''))>parseInt(this.count))
+                            return
+                        ++n;
+                        x.parentNode.parentNode.remove();
+                    })
+                    if(eval(n)==eval(website[3])){
+                        this.nextpage();
+                    }
+                });
+            },
+            allopen(){
+                let i=0,l=$(website[2])
+                for(i;i<l.length;i++){
+                    GM_openInTab(l[i].parentNode.href);//依旧停留筛选页面
+                }
+            }
+        },
+        watch:{
+            count(val){
+                if(val==''){alert('不建议为空');return;}
+                saved_update[0]=val
+                GM_setValue("saved",saved_update)
+                console.log(`数量修改为${GM_getValue("saved")[0]}`)
+            },
+            idea(val){
+                if(val==''||eval(val)<0.6){alert('不能<0.6');return;}
+                saved_update[1]=val
+                GM_setValue("saved",saved_update)
+                console.log(`理想比例修改为${GM_getValue("saved")[1]}`)
+            },
+            unidea(val){
+                if(val==''||eval(val)<0.6){alert('不能<0.6');return;}
+                saved_update[2]=val
+                GM_setValue("saved",saved_update)
+                console.log(`最高比例修改为${GM_getValue("saved")[2]}`)
+            },
+            timeout(val){
+                saved_update[3]=val
+                GM_setValue("saved",saved_update)
+                console.log(`延迟筛选修改为${GM_getValue("saved")[3]}s`)
+            },
+            fortimeout(val){
+                saved_update[4]=val
+                GM_setValue("saved",saved_update)
+                console.log(`校验筛选修改为${GM_getValue("saved")[4]}次--${GM_getValue("saved")[4]*0.5}s`)
+            }
+        }
+    })
+    })();
 
 function web(){
-    if(window.location.href.indexOf('buff.163.com/market/?game=')>-1){
-        GM_setValue('website',['.market-card','f_Bold c_Gray','.lazy','20'])
-    }
-    if(window.location.href.split('/')[3]!=''&& window.location.href.indexOf('www.igxe.cn')>-1 && window.location.href.split('/')[3]!='product'){
-        GM_setValue('website',['.dataList','sum','.label','20'])
-    }
-    if(window.location.href.split('/')[3]!=''&& window.location.href.indexOf('www.c5game.com')>-1 ){
-        GM_setValue('website',['.list-item4','num','.market-state','28'])
+    switch(location.host){
+        case "buff.163.com":
+            window.website = ['.market-card','.f_Bold.c_Gray','.lazy','20']
+            break;
+        case "www.igxe.cn":
+            window.website = ['.dataList','.sum','.label','20']
+            break;
+        case "www.c5game.com":
+            window.website = ['.list-item4','.num','.market-state','28']
+            break;
     }
 }
 
-function filter(){     //过滤
-    return new Promise(resolve => {
-        if($("#sale_count")[0].value==''){alert('最低在售值不能为空')}
-        else{
-            console.log("666")
-            var n=0,
-                l=document.getElementsByClassName(GM_getValue('website')[1]),
-                i=l.length-1;
-            for(i;i>=0;i--){
-                if(eval(l[i].innerHTML.replace(/[^0-9]/g, ''))<parseInt(GM_getValue('saved_tool')[0])){
-                    console.log("个被过滤");
-                    l[i].parentNode.parentNode.remove();
-                    ++n;
-                }
-                if(eval(n)==eval(GM_getValue('website')[3])){
-                    nextpage();
-                }
-            }
-        }
-    });
-
-}
-
-function initdata(){  //初始化
-    if(GM_getValue('saved_tool')[0]!=''){
-        $("#sale_count")[0].value=GM_getValue('saved_tool')[0]
-        //filter()
-    }
-    if(GM_getValue('saved_tool')[1]!=''){
-        $("#ideal")[0].value=GM_getValue('saved_tool')[1]
-    }
-    if(GM_getValue('saved_tool')[2]!=''){
-        $("#unideal")[0].value=GM_getValue('saved_tool')[2]
-    }
-}
 function middle(){  //居中
-    try{
-        if(window.location.href.indexOf('buff.163.com/market/goods?goods_id=')==-1&&window.location.href.indexOf('product')==-1&&window.location.href.indexOf('www.c5game.com/dota/')==-1){
-            return new Promise(resolve => {
-                if($(GM_getValue('website')[0]).width()>$(window).height()){
-                    $(this).scrollTop($(GM_getValue('website')[0]).offset().top)
+    return new Promise(resolve => {
+        try{
+            if(!location.href.includes('buff.163.com/market/goods?goods_id=')||!location.href.includes('product')||!location.href.includes('www.c5game.com/dota/')){
+                if($(website[0]).width()>$(window).height()){
+                    $(this).scrollTop($(website[0]).offset().top)
                 }else{
-                    $(this).scrollTop($(GM_getValue('website')[0]).offset().top+($(window).height()-$(GM_getValue('website')[0]).width())/2);
+                    $(this).scrollTop($(website[0]).offset().top+($(window).height()-$(website[0]).width())/2);
                 }
-            });
-        }
-    }catch(e){console.log(e)}
-}
 
-function nextpage(){
-    try{
-        document.getElementsByClassName("page-link next")[0].click();
-        try{
-            setTimeout(filter,2000);
+            }
         }catch(e){console.log(e)}
-    }catch(e){
-        try{
-            console.log(e)
-            document.getElementsByClassName("next")[0].childNodes[0].click();
-        }catch(e){console.log(e)
-                  document.getElementsByClassName("next js-page")[0].click();}
-    }
+    });
 }
 
-function prevpage(){
-    try{
-        document.getElementsByClassName("page-link prev")[0].click();
-    }catch(e){
-        try{
-            console.log(e)
-            document.getElementsByClassName("previous")[0].childNodes[0].click();
-        }catch(e){console.log(e)
-                  document.getElementsByClassName("prev js-page")[0].click();}
-    }
+GM_addStyle(`
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  word-wrap: break-word;
+  background-color: #fff;
+  background-clip: border-box;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  border-radius: 0.25rem;
 }
-
-function allopen(){
-    try{
-        var i=0,l=$(GM_getValue('website')[2])
-        for(i;i<l.length;i++){
-            //window.open(l[i].parentNode.href,i);
-            GM_openInTab(l[i].parentNode.href);//依旧停留筛选页面
-        }
-    }catch(e){console.log(e)}
+.card-header {
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 0;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
 }
+.card-body {
+  flex: 1 1 auto;
+  text-align: center;
+  padding: 0.5rem 1rem 0rem;
+}
+.card-footer {
+  padding: 0.75rem 1.25rem;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-top: 1px solid rgba(0, 0, 0, 0.125);
+}
+.btn {
+  display: inline-block;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  border: 1px solid transparent;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: 0.25rem;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.btn-group{
+  position: relative;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  vertical-align: middle;
+}
+.badge {
+  display: inline-block;
+  padding: 0.25em 0.4em;
+  font-size: 75%;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+}
+.badge-secondary {
+  color: #fff !important;
+  background-color: #6c757d;
+}
+label {
+    color:rgb(0, 0, 0);
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+input {
+    padding: 1px 0px;
+    border-width: 2px;
+    border-style: inset;
+    border-color: initial;
+    border-image: initial;
+    font: 400 13.3333px Arial;
+    margin: 0;
+    font-family: inherit;
+    overflow: visible;
+    font-size: inherit;
+    line-height: inherit;
+    overflow: visible;
+}
+a{
+   text-decoration: none;
+}
+`)
