@@ -11,7 +11,7 @@ __我的帖子/说明/反馈__
 
 结合JS `ES6` 新特性来方便操作 `let` , `const` , `includes` , `new Promise()` , `Array.from().filter(()=>{})` , `async-await`/`then()`避免回调 **等**
 
-手动 **Copy** `Bootstrap4` 相关 `CSS` **微调**兼容各网站页面样式
+ `Bootstrap4` 相关 `CSS` 引用 **微调**兼容各网站页面样式
 
 兼容 `Edge` `Chrome` `Firefox(略丑)`
   * [igxe](https://www.igxe.cn/dota2/570?sort=3)有显示BUg
