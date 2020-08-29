@@ -1,9 +1,9 @@
 # steam Buff饰品筛选倒余额
 比例自定义 已适配[Buff](https://buff.163.com/) [igxe](https://www.igxe.cn/dota2/570?sort=3) c5game--[dota](https://www.c5game.com/dota.html)/[csgo](https://www.c5game.com/csgo/default/result.html?sort=update_time)
 
-__我的帖子/说明/反馈__
+__我的帖子/说明/反馈/学习记录__
 
---[饰品筛选倒余额 (Keylol论坛)](https://keylol.com/t577669-1-1)   学习记录
+--[饰品筛选倒余额 (Keylol论坛)](https://keylol.com/t577669-1-1) 
 
 面板模块采用 `Vue` 实现数据交互 
 
