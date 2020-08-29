@@ -20,7 +20,7 @@ __我的帖子/说明/反馈/学习记录__
   * c5game由于页面地址混乱只适配[dota](https://www.c5game.com/dota.html)/[csgo](https://www.c5game.com/csgo/default/result.html?sort=update_time)
 
 __脚本使用__
- * 脚本基于 [油猴](http://www.tampermonkey.net/)
+ * 脚本基于 [Tampermonkey 油猴](http://www.tampermonkey.net/)
 
  * **使用前需要安装** [@AFKOUT](https://keylol.com/suid-451341) 老哥的 [饰品比例计算脚本](https://greasyfork.org/zh-CN/scripts/35597-%E9%A5%B0%E5%93%81%E6%AF%94%E4%BE%8B%E8%AE%A1%E7%AE%97%E8%84%9A%E6%9C%AC)
 ⇦他的[帖子/反馈](https://keylol.com/t331397-1-1)
