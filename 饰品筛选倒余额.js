@@ -2,7 +2,7 @@
 // @name         饰品筛选倒余额 比例自定义 支持buff c5game igxe
 // @namespace    http://tampermonkey.net/
 // @icon      	 https://store.steampowered.com/favicon.ico
-// @version      0.22
+// @version      0.23
 // @description  饰品筛选倒余额 可视化比例自定义面板 支持buff c5game igxe
 // @author       wsz987
 // @match        *://buff.163.com/market/?game=*
@@ -85,10 +85,13 @@ E 过滤后全部打开*/
         },
         mounted() {
             if(location.href.includes('buff.163.com/market/goods?goods_id=')||location.href.includes('www.igxe.cn/product')||location.href.includes('c5game.com/dota/')||location.href.includes('c5game.com/csgo/item')){
+                console.log(`执行比例: ${GM_getValue('saved')[1]} ${GM_getValue('saved')[2]}`)
                 console.log(`${this.timeout}s后开始筛选 ${this.fortimeout}次校验`)
                 setTimeout(()=>{
+                    console.log(`是否进入校验${this.choice()}`)
                     if(this.choice()){
-                        for (var i = 0; i < this.fortimeout; i++) {
+                        console.log(`启动校验`)
+                        for (let i = 0; i < this.fortimeout; i++) {
                             (i=> {
                                 setTimeout(()=>{
                                     console.log(`第 ${i+1}次校验`)
@@ -134,26 +137,25 @@ E 过滤后全部打开*/
                 window.location.reload()
             },
             choice(){
-                try{
-                    var lsr=eval($(".lsr")[0].innerText),
-                        hbr=eval($(".hbr")[0].innerText),
-                        Value_1=eval(this.idea),
-                        Value_2=eval(this.unidea);  //lsr出售价比例  hbr收购价比例
-                    console.log(GM_getValue('saved')[1],GM_getValue('saved')[2]);
-                    if(lsr>eval(1)||hbr>eval(1)){window.close()}
-                    if(lsr>Value_1){
-                        if(hbr>Value_2){
-                            window.close();
-                        }
+                if($('.lsr') && $('.hbr')){
+                    const lsr=Number($('.lsr').text()),
+                          hbr=Number($('.hbr').text()),
+                          Value_1=Number(this.idea),
+                          Value_2=Number(this.unidea)
+                    if(lsr=='' || hbr=='') return true
+                    if(lsr>1 || hbr>1) window.close()
+                    if(lsr > Value_1){
+                        console.log('1')
+                        if(hbr > Value_2) window.close()
+                        return false
                     }else{
-                        if(hbr>Value_2){
-                            window.close();
-                        }
+                        console.log('2')
+                        if(hbr > Value_2) window.close()
+                        return false
                     }
-                }catch(e){
-                    console.log(e)
                     return true
                 }
+                return true
             },
             filter(){
                 return new Promise(resolve => {
