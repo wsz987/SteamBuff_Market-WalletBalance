@@ -5,14 +5,6 @@ __我的帖子/说明/反馈/学习记录__
 
 --[饰品筛选倒余额 (Keylol论坛)](https://keylol.com/t577669-1-1) 
 
-面板模块采用 `Vue` 实现数据交互 
-
-筛选机制由 `JQury` 实现 `DOM` 操作 及动态组件加载
-
-结合JS `ES6` 新特性来方便操作 `let` , `const` , `includes` , `new Promise()` , `Array.from().filter(()=>{})` , `async-await`/`then()`避免回调 **等**
-
- `Bootstrap4` 相关 `CSS` 引用 **微调**兼容各网站页面样式
-
 接收键盘指令`Keyboard` 自动筛选
 
 兼容 `Edge` `Chrome` `Firefox(略丑)`
