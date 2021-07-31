@@ -6,18 +6,22 @@ __我的帖子/说明/反馈/学习记录__
 --[饰品筛选倒余额 (Keylol论坛)](https://keylol.com/t577669-1-1) 
 
 接收键盘指令`Keyboard` 自动筛选
-
-兼容 `Edge` `Chrome` `Firefox(略丑)`
-  * [igxe](https://www.igxe.cn/dota2/570?sort=3)有显示BUg
-  * c5game由于页面地址混乱只适配[dota](https://www.c5game.com/dota.html)/[csgo](https://www.c5game.com/csgo/default/result.html?sort=update_time)
+__更新说明__
+ * 代码重构
+ * 修复c5脚本失效问题
+ * 移除延迟筛选及校验次数模块，新的检测方式自动执行比例筛选
+ * 新增steam社区连通性检测
+ * 现支持多种筛选规则
+ * 多页面下面板数据同步功能
+ * 面板可拖动
 
 __脚本使用__
  * 脚本基于 [Tampermonkey 油猴](http://www.tampermonkey.net/)
 
- * **使用前需要安装** [@AFKOUT](https://keylol.com/suid-451341) 老哥的 [饰品比例计算脚本](https://greasyfork.org/zh-CN/scripts/35597-%E9%A5%B0%E5%93%81%E6%AF%94%E4%BE%8B%E8%AE%A1%E7%AE%97%E8%84%9A%E6%9C%AC)
+ * **使用前需要安装** [@AFKOUT](https://keylol.com/suid-451341) 老哥的 [饰品比例计算脚本](https://greasyfork.org/zh-CN/scripts/35597)
 ⇦他的[帖子/反馈](https://keylol.com/t331397-1-1)
 
- * 我的脚本 [饰品筛选倒余额脚本](https://greasyfork.org/zh-CN/scripts/399176-%E9%A5%B0%E5%93%81%E7%AD%9B%E9%80%89%E5%80%92%E4%BD%99%E9%A2%9D-%E6%AF%94%E4%BE%8B%E8%87%AA%E5%AE%9A%E4%B9%89-%E6%94%AF%E6%8C%81buff-c5game-igxe)
+ * 我的脚本 [[buff/c5game/igxe]饰品比例筛选脚本](https://greasyfork.org/zh-CN/scripts/399176)
 
 __支持键盘指令__`Keyboard`
 
@@ -51,19 +55,15 @@ __筛选机制__
 
  * 最低在售数量  >*避免冷门饰品*
 
- * 理想比例  >*当前市场最低出售价比例*
+ * 全都要  >*当求购比例 和 出售比例 均符合要求*
 
- * 最高比例  >*当前市场最高收购价比例*
+ * 仅求购  >*求购比例低于设定值*
 
- * 理想比例 
-
-        >不符合要求 >*筛选* 不超过最高比例
-
-        > 符合要求  >*筛选* 不超过最高比例 (避免JS抬价造成虚假比例)
+ * 仅出售  >*出售比例低于设定值*
 
 __效果__ `鼠标移到面板可以查看详细内容`
 
- * ![面板](https://blob.keylol.com/forum/202008/12/232150n1kr7z75y7uzt7z1.png)
- * ![面板1](https://blob.keylol.com/forum/202008/12/232200xi4oom9oasnzxm9n.png)
- * ![面板2](https://blob.keylol.com/forum/202008/12/232203m02948stksc20ajw.png)
- * ![Buff中的效果](https://blob.keylol.com/forum/202008/12/231520h44u99bjb9rrijqy.png)
+ * ![面板](https://blob.keylol.com/forum/202107/31/160607mgee8sa2828gwgtm.png)
+ * ![Buff中的效果](https://blob.keylol.com/forum/202107/31/160317nt5h5otvvztxz1st.jpg)
+ * ![Buff中的效果](https://blob.keylol.com/forum/202107/31/160319qcsrznugvbhsc4vv.jpg)
+ * ![Buff中的效果](https://blob.keylol.com/forum/202107/31/160320royssjzoggjj5ov2.jpg)
