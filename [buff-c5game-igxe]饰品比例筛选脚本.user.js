@@ -2,7 +2,7 @@
 // @name         [buff/c5game/igxe]饰品比例筛选脚本
 // @namespace    http://tampermonkey.net/
 // @icon      	 https://store.steampowered.com/favicon.ico
-// @version      1.1
+// @version      1.3
 // @description  支持[buff/c5game/igxe]饰品比例筛选,支持多种筛选规则
 // @author       wsz987
 // @match        *://buff.163.com/market/*
@@ -187,7 +187,7 @@
             PREV_PAGE:{
                 id:'PREV_PAGE',
                 func(){
-                    tryCatch(()=>$(webConfig.prev)[0].click())
+                    tryCatch(()=>$(webConfig.preBtn)[0].click())
                 },
                 template(){
                     return `<button id="${this.id}">&lt;</button>`
@@ -225,7 +225,7 @@
             NEXT_PAGE:{
                 id:'NEXT_PAGE',
                 func(){
-                    tryCatch(()=>$(webConfig.next)[0].click())
+                    tryCatch(()=>$(webConfig.nextBtn)[0].click())
                 },
                 template(){
                     return `<button id="${this.id}">&gt;</button>`
@@ -244,7 +244,6 @@
                     });
                 }
             })
-            //console.log(this)
             return Template
         }
     }
@@ -315,21 +314,25 @@ function onkeydownListener({Footer_DOM:Event,DOM}){
     tryCatch(()=>{
         document.onkeydown=function(event){
             var e = event || window.event || arguments.callee.caller.arguments[0];
+            // S
             if(e && e.keyCode==83){
                 middle()
                 filter(DOM,Event)
             }
+            // D
             if(e && e.keyCode==68){
                 Event.NEXT_PAGE.func()
             }
+            // A
             if(e && e.keyCode==65){
                 Event.PREV_PAGE.func()
             }
+            // W
             if(e && e.keyCode==87){
                 middle();
             }
+            // E
             if(e && e.keyCode==69){
-                $('input').blur()
                 filter(DOM,Event)
                 openALLInTab()
             }
@@ -339,62 +342,110 @@ function onkeydownListener({Footer_DOM:Event,DOM}){
 
 function middle(){
     tryCatch(()=>{
-        const { listCard } =webConfig
-        if(!location.href.includes('buff.163.com/market/')||!location.href.includes('product')||!location.href.includes('www.c5game.com/dota/')){
-            if($(listCard).width()>$(window).height()){
-                $(this).scrollTop($(listCard).offset().top)
+        const { goodsContainer } =webConfig
+        const Rules =['buff.163.com/market/','igxe.cn/market/','c5game.com/']
+        if(Rules.some(rule=>location.href.includes(rule))){
+            //if(!location.href.includes('buff.163.com/market/')||!location.href.includes('product')||!location.href.includes('www.c5game.com/dota/')){
+            if($(goodsContainer).width()>$(window).height()){
+                $(this).scrollTop($(goodsContainer).offset().top)
             }else{
-                $(this).scrollTop($(listCard).offset().top+($(window).height()-$(listCard).width())/2);
+                $(this).scrollTop($(goodsContainer).offset().top+($(window).height()-$(goodsContainer).width())/2);
             }
         }
     })
 }
 
 function initWebConfig(){
-    // Array<string> = [list_container,onsale_count,list_item_open,list_count,previous_button,next_button]
-    let config=[]
+    let config={}
     switch(location.host){
         case "buff.163.com":
-            config = ['.market-card','.f_Bold.c_Gray','.lazy','20','.page-link.prev','.page-link.next']
+            config={
+                goodsContainer:'.market-card',
+                onSaleCount:'.f_Bold.c_Gray',
+                goodsItemHref:"ul[class^='card_']>li:not(.script_no)>a",
+                goodsCount:20,
+                preBtn:'.page-link.prev',
+                nextBtn:'.page-link.next',
+                currentGoodsNode:(el)=>el.parentNode.parentNode
+            }
             break;
         case "www.igxe.cn":
-            config = ['.list','.info .stock','.list .item .cover','20','.btn-prev','.btn-next']
+            config={
+                goodsContainer:'.list',
+                onSaleCount:'.info .stock',
+                goodsItemHref:'.list a.item:not(.script_no)',
+                goodsCount:20,
+                preBtn:'.btn-prev',
+                nextBtn:'.btn-next',
+                currentGoodsNode:(el)=>el.parentNode.parentNode
+            }
             break;
         case "www.c5game.com":
-            config = ['.rm-container,.banner-user','.num','.market-state','28','.previous a','.next a']
+            config={
+                goodsContainer:'#market_index .list',
+                onSaleCount:'.count',
+                goodsItemHref:'.list .el-col:not(.script_no) a.mb20',
+                goodsCount:42,
+                preBtn:'.btn-prev',
+                nextBtn:'.btn-next',
+                currentGoodsNode:(el)=>el.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode
+            }
+            c5game_goodsDetailPageFix()
+            c5game_listenListDataLoad()
             break;
     }
-    window.webConfig= {
-        listCard:config[0],
-        onSale:config[1],
-        goods:config[2],
-        listNum:config[3],
-        prev:config[4],
-        next:config[5]
-    }
+    if(JSON.stringify(config) == "{}") console.error('script config init error')
+    else window.webConfig = config
 }
 
 function openALLInTab(){
-    for(let i of $(webConfig.goods)){
-        let parent =i.parentNode
-        if(location.host!=="www.igxe.cn") parent=parent.parentNode
-        parent.style.display!='none' && GM_openInTab(i.parentNode.href)
+    for(let i of $(webConfig.goodsItemHref)){
+        i?.href && GM_openInTab(i?.href)
     }
 }
 
 function filter({ON_SALE_COUNT},Event){
-    let { onSale, listNum }=webConfig
+    let { onSaleCount, goodsCount,currentGoodsNode }=webConfig
     let n=0
-    Array.from($(onSale)).filter(x=>{
-        if(eval(x.innerHTML.replace(/[^0-9]/g, ''))>parseInt(getVal(ON_SALE_COUNT)))
+    Array.from($(onSaleCount)).filter(x=>{
+        if(eval(x.innerHTML.replace(/[^0-9]/g, ''))>=parseInt(getVal(ON_SALE_COUNT)))
             return
         ++n;
-        //x.parentNode.parentNode.remove();
-        x.parentNode.parentNode.style='display:none;'
+        currentGoodsNode(x).className += ' script_no'
     })
-    if(eval(n)==eval(listNum)){
+    if(n==goodsCount){
         Event.NEXT_PAGE.func()
     }
+}
+
+function c5game_listenListDataLoad(){
+    tryCatch(()=>{
+        const mutation = new MutationObserver(function(mutationRecoards, observer) {
+            if(mutationRecoards[0]?.oldValue=="list el-loading-parent--relative"){
+                console.log('c5game list data loaded');
+                $('.script_no').removeClass('script_no')
+            }
+        })
+        mutation.observe(document.querySelector("#market_index > ul.list"), {
+            attributes: true,
+            characterDataOldValue :true,
+            attributeFilter: ['class'],
+            attributeOldValue: true
+        });
+    })
+}
+
+function c5game_goodsDetailPageFix(){
+    tryCatch(()=>{
+        let href = document.querySelector("div.bottom-info > a")?.attributes?.href?.value
+        $("body").append(`<div class ='steamUrl scriptFix' style="display:none;"><a href='${href}'></a></div>`)
+        $("body").append("<div class='hero-fix  scriptFix'><div class ='hero'></div></div>")
+        $("body").append(`<tbody class='scriptFix' style="display:none;"><td class='ft-orange'><span></span></td></tbody>`)
+        $(document).on("DOMNodeInserted",".onsale-table", (e)=>{
+            let firstPrice = $('.onsale-table-item .text-price:first').text()
+            $('tbody.scriptFix .ft-orange:first span').text(firstPrice)
+        })
+    })
 }
 
 function setVal(key,val){
@@ -508,5 +559,16 @@ GM_addStyle(`
 }
 #AUTH{
     color: #0f0e17 !important;
+}
+.script_no{
+    display:none !important;
+}
+.hero-fix{
+    position: absolute;
+    top: 25%;
+    right: 30%;
+    color:white;
+    font-weight: bold;
+    z-index:999;
 }
 `)
